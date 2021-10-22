@@ -1,0 +1,45 @@
+{
+    "name": "devolon/smartum",
+    "description": "smartum package implements Smartum as a gateway of `devolon/payment` package",
+    "keywords": ["laravel", "payment", "smartum"],
+    "require": {
+        "php": "^8.0",
+        "laravel/framework": "^8.12",
+        "devolon/payment": "^1.0",
+        "devolon/laravel-common": "^1.0",
+        "guzzlehttp/guzzle": "^7.0.1",
+        "lcobucci/jwt": "^4.1.5"
+    },
+    "require-dev": {
+        "mockery/mockery": "^1.4.2",
+        "orchestra/testbench-core": "^6.23",
+        "phpunit/phpunit": "^9.3.3"
+    },
+    "autoload": {
+        "psr-4": {
+            "Devolon\\Smartum\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Devolon\\Smartum\\Tests\\": "tests/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Devolon technical team",
+            "homepage": "https://www.devolon.fi"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Devolon\\Smartum\\DevolonSmartumServiceProvider"
+            ]
+        }
+    },
+    "config": {
+        "preferred-install": ""
+    },
+    "minimum-stability": "dev"
+}

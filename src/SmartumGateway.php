@@ -2,6 +2,7 @@
 
 namespace Devolon\Smartum;
 
+use Devolon\Payment\Contracts\CanRefund;
 use Devolon\Payment\Contracts\HasUpdateTransactionData;
 use Devolon\Payment\Contracts\PaymentGatewayInterface;
 use Devolon\Payment\DTOs\PurchaseResultDTO;
@@ -13,10 +14,8 @@ use Devolon\Smartum\DTOs\PurchaseRequestDTO;
 use Lcobucci\JWT\Configuration;
 use Lcobucci\JWT\Signer\Key\InMemory;
 use Lcobucci\JWT\Validation\RequiredConstraintsViolated;
-use Solinor\Smartum\FormBuilder;
-use Solinor\Smartum\PaymentApi;
 
-class SmartumGateway implements PaymentGatewayInterface, HasUpdateTransactionData
+class SmartumGateway implements PaymentGatewayInterface, HasUpdateTransactionData, CanRefund
 {
     public const NAME = 'smartum';
 
@@ -25,6 +24,11 @@ class SmartumGateway implements PaymentGatewayInterface, HasUpdateTransactionDat
         private GenerateCallbackURLService $generateCallbackURLService,
         private SetGatewayResultService $setGatewayResultService,
     ) {
+    }
+
+    public function getName(): string
+    {
+        return self::NAME;
     }
 
     public function purchase(Transaction $transaction): PurchaseResultDTO
@@ -55,17 +59,15 @@ class SmartumGateway implements PaymentGatewayInterface, HasUpdateTransactionDat
 
     public function verify(Transaction $transaction, array $data): bool
     {
-        $configuration = Configuration::forAsymmetricSigner(
-            \Lcobucci\JWT\Signer\Ecdsa\Sha512::create(),
-            InMemory::file(config('smartum.jwt_public_key_path')),
-            InMemory::base64Encoded(\base64_encode(config('smartum.jwt_public_key_id')))
-        );
+        $configuration = $this->getJWTConfiguration();
         $token = $configuration->parser()->parse($data['jwt']);
         try {
-            $configuration->validator()->assert($token, new \Lcobucci\JWT\Validation\Constraint\SignedWith(
-                \Lcobucci\JWT\Signer\Ecdsa\Sha512::create(),
-                InMemory::file(config('smartum.jwt_public_key_path'))
-            ));
+            $configuration->validator()
+                ->assert($token, new \Lcobucci\JWT\Validation\Constraint\SignedWith(
+                    \Lcobucci\JWT\Signer\Ecdsa\Sha512::create(),
+                    InMemory::file(config('smartum.jwt_public_key_path'))
+                ))
+            ;
         } catch (RequiredConstraintsViolated $e) {
             return false;
         }
@@ -78,9 +80,11 @@ class SmartumGateway implements PaymentGatewayInterface, HasUpdateTransactionDat
         return true;
     }
 
-    public function getName(): string
+    public function refund(Transaction $transaction): bool
     {
-        return self::NAME;
+        ($this->setGatewayResultService)($transaction, 'refund', ['status' => 'Refunded']);
+
+        return true;
     }
 
     public function updateTransactionDataRules(string $newStatus): array
@@ -95,5 +99,14 @@ class SmartumGateway implements PaymentGatewayInterface, HasUpdateTransactionDat
                 'string'
             ]
         ];
+    }
+
+    private function getJWTConfiguration(): Configuration
+    {
+        return Configuration::forAsymmetricSigner(
+            \Lcobucci\JWT\Signer\Ecdsa\Sha512::create(),
+            InMemory::file(config('smartum.jwt_public_key_path')),
+            InMemory::base64Encoded(\base64_encode(config('smartum.jwt_public_key_id')))
+        );
     }
 }

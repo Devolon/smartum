@@ -16,10 +16,10 @@ abstract class SmartumTestCase extends TestCase
 
     protected function setUp(): void
     {
+        putenv('IS_SMARTUM_AVAILABLE=true');
         parent::setUp();
 
         $this->artisan('migrate:fresh');
-        putenv('IS_SMARTUM_AVAILABLE=true');
 
         Schema::create('users', function (Blueprint $table) {
             $table->increments('id');

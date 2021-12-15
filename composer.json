@@ -5,7 +5,7 @@
     "require": {
         "php": "^8.0",
         "laravel/framework": "^8.12",
-        "devolon/payment": "^1.1",
+        "devolon/payment": "^1.2",
         "devolon/laravel-common": "^2.0",
         "guzzlehttp/guzzle": "^7.0.1",
         "lcobucci/jwt": "^4.1.5"
@@ -41,5 +41,5 @@
     "config": {
         "preferred-install": ""
     },
-    "minimum-stability": "dev"
+    "minimum-stability": "stable"
 }

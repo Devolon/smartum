@@ -3,6 +3,7 @@
 namespace Devolon\Smartum\Tests\Unit;
 
 use DateTimeImmutable;
+use Devolon\Payment\Contracts\CanRefund;
 use Devolon\Payment\Contracts\HasUpdateTransactionData;
 use Devolon\Payment\Contracts\PaymentGatewayInterface;
 use Devolon\Payment\DTOs\PurchaseResultDTO;
@@ -17,14 +18,11 @@ use Devolon\Smartum\SmartumClient;
 use Devolon\Smartum\SmartumGateway;
 use Devolon\Smartum\Tests\SmartumTestCase;
 use Hamcrest\Core\IsEqual;
-use Httpful\Response;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\Storage;
 use Lcobucci\JWT\Configuration;
 use Lcobucci\JWT\Signer\Key\InMemory;
-use Mockery;
 use Mockery\MockInterface;
-use stdClass;
 
 class SmartumGatewayTest extends SmartumTestCase
 {
@@ -162,6 +160,26 @@ class SmartumGatewayTest extends SmartumTestCase
         $transaction->refresh();
     }
 
+    public function testRefund()
+    {
+        // Arrange
+        $setGatewayResultService = $this->mockSetGatewayResultService();
+        /** @var CanRefund $gateway */
+        $gateway = $this->discoverGateway();
+        $transaction = Transaction::factory()->done()->create();
+
+        // Expect
+        $setGatewayResultService
+            ->shouldReceive('__invoke')
+            ->with($transaction, 'refund', ['status' => 'Refunded'])
+            ->once();
+
+        // Act
+        $result = $gateway->refund($transaction);
+
+        // Assert
+        $this->assertTrue($result);
+    }
 
     public function testUpdateTransactionDataRulesWithDoneStatus()
     {
